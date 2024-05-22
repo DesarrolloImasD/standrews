@@ -14,9 +14,8 @@ async def handle_telnet():
     #Datos de conexión
     # host = '192.168.32.242'  
     # port = 23
-
-    host = '169.254.54.178'  
-    port = 49211
+    host = '192.168.0.2'  
+    port = 2001
     while True:
         try:
             reader, writer = await asyncio.open_connection(host, port)
@@ -25,7 +24,6 @@ async def handle_telnet():
             with open(f"logs/{today}.log", "a", encoding='utf-8') as archivo:
                 archivo.write(f"{datetime.now().strftime('%d-%m-%Y %H:%M:%S')} - Iniciando captura e inserción. \n")
                 archivo.write(f"{datetime.now().strftime('%d-%m-%Y %H:%M:%S')} - Conectado a cámara {host}:{port}\n")
-                    
             # Leer los datos recibidos
             while True:
                 try:
@@ -43,7 +41,6 @@ async def handle_telnet():
                     
                     with open(f"logs/{today}.log", "a", encoding='utf-8') as archivo:
                         archivo.write(f'{datetime.now().strftime("%d-%m-%Y %H:%M:%S")} - Datos recibidos desde cámara.\n')
-
                 except asyncio.TimeoutError:
                     print(f'{datetime.now().strftime("%d-%m-%Y %H:%M:%S")} - Se ha superado el tiempo de espera sin recibir datos. Cerrando la conexión.')
                     today = datetime.now().strftime("%Y-%m-%d")
@@ -54,8 +51,7 @@ async def handle_telnet():
                     print("Conexión cancelada por el usuario.")
                     with open(f"logs/{today}.log", "a", encoding='utf-8') as archivo:
                         archivo.write(datetime.now().strftime("%d-%m-%Y %H:%M:%S") + " - Conexión cancelada por el usuario.\n")
-                    break
-                
+                    break                
                 else:
                     if not data:
                         break
@@ -86,7 +82,7 @@ async def handle_telnet():
                         absurdo = f"SELECT idProducto FROM spt.producto WHERE codigo = '{codProducto}'"
                         cursor.execute(absurdo)
                         resultados = cursor.fetchall()
-                        if(len(resultados) > 0):                
+                        if(len(resultados) >= 0):                
                             idProducto = int(resultados[0][0])
                             idGrupoLinea = f"SELECT idGrupoLinea FROM grupoLinea;"
                             cursor.execute(idGrupoLinea)
@@ -103,14 +99,12 @@ async def handle_telnet():
                             consulta = f"INSERT INTO spt.produccion (valProduccion, created_at, Turno_idTurno, Producto_idProducto, Linea_GrupoLinea_idGrupoLinea, Linea_GrupoLinea_Planta_idPlanta, Linea_GrupoLinea_Planta_Cliente_idCliente) VALUES ('{codigoProducto}','{ahora}',{idTurno},{idProducto}, {idGrupoLinea}, {idPlanta}, {idCliente})"
                             print(codProducto + " insertado correctamente.")
                             with open(f"logs/{today}.log", "a", encoding='utf-8') as archivo:
-                                archivo.write(datetime.now().strftime("%d-%m-%Y %H:%M:%S") + " - " + codProducto + " insertado correctamente.\n")
-                            
+                                archivo.write(datetime.now().strftime("%d-%m-%Y %H:%M:%S") + " - " + codProducto + " insertado correctamente.\n")                            
                         else:
                             consulta = f"INSERT INTO spt.produccion (valProduccion, created_at, Turno_idTurno, Producto_idProducto, Linea_GrupoLinea_idGrupoLinea, Linea_GrupoLinea_Planta_idPlanta, Linea_GrupoLinea_Planta_Cliente_idCliente) VALUES ('{0}','{ahora}',{idTurno},{0}, {idGrupoLinea}, {idPlanta}, {idCliente})"
                             print(datetime.now().strftime("%d-%m-%Y %H:%M:%S") + " - " + "No leído")
                         cursor.execute(consulta)
                         conexion.commit()
-
                         # Cerrar conexión a la base de datos
                         cursor.close()
                         conexion.close()
@@ -118,10 +112,8 @@ async def handle_telnet():
                         print(datetime.now().strftime("%d-%m-%Y %H:%M:%S") + " - " + "error")
                         with open(f"logs/{today}.log", "a", encoding='utf-8') as archivo:
                             archivo.write(datetime.now().strftime("%d-%m-%Y %H:%M:%S") + " - " + consulta + ".\n")
-                            
         except asyncio.CancelledError:
-                print(datetime.now().strftime("%d-%m-%Y %H:%M:%S") + " - " + "Conexión cancelada por el usuario.")
-        
+                print(datetime.now().strftime("%d-%m-%Y %H:%M:%S") + " - " + "Conexión cancelada por el usuario.")        
         except Exception as e:
             print(f"Error de conexión: {e}")
             await asyncio.sleep(10)  # Esperar un tiempo antes de intentar la reconexión
